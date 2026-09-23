@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   X,
   Calendar,
@@ -293,6 +293,19 @@ export const SignalDetailModal: React.FC<SignalDetailModalProps> = ({
   onOpenPdf,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'quality' | 'ownership' | 'structure' | 'timing' | 'evidence' | 'timeline'>('overview');
+  const [evidencePage, setEvidencePage] = useState(0);
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  const EVIDENCE_PER_PAGE = 5;
+
+  const handleTabChange = useCallback((tab: typeof activeTab) => {
+    setActiveTab(tab);
+    setEvidencePage(0);
+    // Scroll body back to top
+    if (bodyRef.current) {
+      bodyRef.current.scrollTop = 0;
+    }
+  }, []);
 
   if (!signal) return null;
 
@@ -362,8 +375,8 @@ export const SignalDetailModal: React.FC<SignalDetailModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-2xl overflow-hidden">
         
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-slate-800 bg-slate-950/95 flex items-start justify-between gap-4">
@@ -441,9 +454,9 @@ export const SignalDetailModal: React.FC<SignalDetailModalProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center px-4 sm:px-6 border-b border-slate-800 bg-slate-950/60 gap-1 overflow-x-auto">
+        <div className="flex items-center px-4 sm:px-6 border-b border-slate-800 bg-slate-950/60 gap-1 overflow-x-auto shrink-0">
           <button
-            onClick={() => setActiveTab('overview')}
+            onClick={() => handleTabChange('overview')}
             className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'overview'
                 ? 'border-cyan-400 text-cyan-300 bg-cyan-950/20'
@@ -454,7 +467,7 @@ export const SignalDetailModal: React.FC<SignalDetailModalProps> = ({
             <span>Ringkasan & Skor</span>
           </button>
           <button
-            onClick={() => setActiveTab('quality')}
+            onClick={() => handleTabChange('quality')}
             className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'quality'
                 ? 'border-emerald-400 text-emerald-300 bg-emerald-950/20'
@@ -465,7 +478,7 @@ export const SignalDetailModal: React.FC<SignalDetailModalProps> = ({
             <span>Kualitas & Valuasi Aksi</span>
           </button>
           <button
-            onClick={() => setActiveTab('ownership')}
+            onClick={() => handleTabChange('ownership')}
             className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'ownership'
                 ? 'border-sky-400 text-sky-300 bg-sky-950/20'
@@ -476,7 +489,7 @@ export const SignalDetailModal: React.FC<SignalDetailModalProps> = ({
             <span>Kepemilikan & Transaksi ({signal.ownership_history?.length || 0})</span>
           </button>
           <button
-            onClick={() => setActiveTab('structure')}
+            onClick={() => handleTabChange('structure')}
             className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'structure'
                 ? 'border-indigo-400 text-indigo-300 bg-indigo-950/20'
@@ -487,7 +500,7 @@ export const SignalDetailModal: React.FC<SignalDetailModalProps> = ({
             <span>Struktur Pemegang Saham</span>
           </button>
           <button
-            onClick={() => setActiveTab('timing')}
+            onClick={() => handleTabChange('timing')}
             className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'timing'
                 ? 'border-amber-400 text-amber-300 bg-amber-950/20'
@@ -498,7 +511,7 @@ export const SignalDetailModal: React.FC<SignalDetailModalProps> = ({
             <span>Timing & Lead Time</span>
           </button>
           <button
-            onClick={() => setActiveTab('evidence')}
+            onClick={() => handleTabChange('evidence')}
             className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'evidence'
                 ? 'border-violet-400 text-violet-300 bg-violet-950/20'
@@ -509,7 +522,7 @@ export const SignalDetailModal: React.FC<SignalDetailModalProps> = ({
             <span>Bukti Pengumuman ({signal.evidence?.length || 0})</span>
           </button>
           <button
-            onClick={() => setActiveTab('timeline')}
+            onClick={() => handleTabChange('timeline')}
             className={`flex items-center gap-1.5 py-2.5 px-3 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
               activeTab === 'timeline'
                 ? 'border-cyan-400 text-cyan-300 bg-cyan-950/20'
@@ -522,7 +535,7 @@ export const SignalDetailModal: React.FC<SignalDetailModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div ref={bodyRef} className="flex-1 overflow-y-auto p-5 space-y-4 min-h-0">
           
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (
@@ -1448,57 +1461,105 @@ export const SignalDetailModal: React.FC<SignalDetailModalProps> = ({
           )}
 
           {/* TAB 6: SOURCE EVIDENCE EXCERPTS */}
-          {activeTab === 'evidence' && (
-            <div className="space-y-3.5">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-300">
-                  Kutipan Bukti Dokumen & Halaman PDF
-                </h3>
-                <span className="text-xs text-slate-500">Kutipan teks pendukung analisis</span>
-              </div>
+          {activeTab === 'evidence' && (() => {
+            const evidenceList = signal.evidence || [];
+            const totalPages = Math.ceil(evidenceList.length / EVIDENCE_PER_PAGE);
+            const pagedEvidence = evidenceList.slice(
+              evidencePage * EVIDENCE_PER_PAGE,
+              (evidencePage + 1) * EVIDENCE_PER_PAGE
+            );
+            return (
+              <div className="space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-slate-300">
+                    Kutipan Bukti Dokumen & Halaman PDF
+                  </h3>
+                  <span className="text-xs text-slate-500">Kutipan teks pendukung analisis</span>
+                </div>
 
-              {signal.evidence && signal.evidence.length > 0 ? (
-                <div className="space-y-2.5">
-                  {signal.evidence.map((ev, idx) => (
-                    <div key={idx} className="bg-slate-950/70 rounded-xl p-3.5 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="space-y-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2 py-0.2 rounded text-[10px] font-bold bg-slate-800 text-cyan-300 border border-slate-700">
-                            Hal {ev.page_number}
-                          </span>
-                          <span className="text-xs font-medium text-slate-400">
-                            {formatEvidenceType(ev.evidence_type)}
-                          </span>
-                          {ev.announcement_title && (
-                            <span className="text-xs text-slate-300 truncate max-w-md font-medium">
-                              &bull; {ev.announcement_title}
-                            </span>
+                {evidenceList.length > 0 ? (
+                  <>
+                    <div className="space-y-2.5">
+                      {pagedEvidence.map((ev, idx) => (
+                        <div key={evidencePage * EVIDENCE_PER_PAGE + idx} className="bg-slate-950/70 rounded-xl p-3.5 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-cyan-300 border border-slate-700">
+                                Hal {ev.page_number}
+                              </span>
+                              <span className="text-xs font-medium text-slate-400">
+                                {formatEvidenceType(ev.evidence_type)}
+                              </span>
+                              {ev.announcement_title && (
+                                <span className="text-xs text-slate-300 truncate max-w-md font-medium">
+                                  &bull; {ev.announcement_title}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-200 italic bg-slate-900/50 p-2 rounded-lg border border-slate-800 font-mono">
+                              "{ev.excerpt}"
+                            </p>
+                          </div>
+
+                          {ev.document_id && (
+                            <button
+                              onClick={() => onOpenPdf(ev.document_id!, ev.page_number)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-semibold transition-colors shrink-0 cursor-pointer"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              <span>Buka PDF</span>
+                            </button>
                           )}
                         </div>
-                        <p className="text-xs text-slate-200 italic bg-slate-900/50 p-2 rounded-lg border border-slate-800 font-mono">
-                          "{ev.excerpt}"
-                        </p>
-                      </div>
-
-                      {ev.document_id && (
-                        <button
-                          onClick={() => onOpenPdf(ev.document_id!, ev.page_number)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-semibold transition-colors shrink-0 cursor-pointer"
-                        >
-                          <FileText className="w-3.5 h-3.5" />
-                          <span>Buka PDF</span>
-                        </button>
-                      )}
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-slate-500 text-xs bg-slate-950/40 rounded-xl border border-slate-800">
-                  Belum ada kutipan teks bukti langsung yang tercatat.
-                </div>
-              )}
-            </div>
-          )}
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-xs text-slate-500">
+                          {evidencePage * EVIDENCE_PER_PAGE + 1}–{Math.min((evidencePage + 1) * EVIDENCE_PER_PAGE, evidenceList.length)} dari {evidenceList.length} bukti
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setEvidencePage(p => Math.max(0, p - 1))}
+                            disabled={evidencePage === 0}
+                            className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700"
+                          >
+                            ← Sebelumnya
+                          </button>
+                          {Array.from({ length: totalPages }, (_, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setEvidencePage(i)}
+                              className={`w-7 h-7 rounded-lg text-xs font-bold cursor-pointer transition-colors border ${
+                                i === evidencePage
+                                  ? 'bg-violet-700 text-white border-violet-600'
+                                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border-slate-700'
+                              }`}
+                            >
+                              {i + 1}
+                            </button>
+                          ))}
+                          <button
+                            onClick={() => setEvidencePage(p => Math.min(totalPages - 1, p + 1))}
+                            disabled={evidencePage === totalPages - 1}
+                            className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700"
+                          >
+                            Berikutnya →
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-8 text-slate-500 text-xs bg-slate-950/40 rounded-xl border border-slate-800">
+                    Belum ada kutipan teks bukti langsung yang tercatat.
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* TAB 7: TEMPORAL TIMELINE */}
           {activeTab === 'timeline' && (

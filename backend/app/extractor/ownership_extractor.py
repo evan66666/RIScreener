@@ -216,7 +216,7 @@ def extract_ownership_facts_from_text(
             actor_name = by_match.group(1).strip()
 
     if not actor_name or len(actor_name) < 2:
-        actor_name = "Disclosed Strategic Holder"
+        actor_name = ""
 
     # 5. Extract Investor Classification & Domicile (PRD v7.2 Section 5)
     raw_investor_class = ""
@@ -395,6 +395,29 @@ def extract_ownership_facts_from_text(
             if ff_val is not None:
                 free_float_pct = ff_val
 
+    # Validate if there is genuine transaction evidence
+    has_transaction_evidence = (
+        abs(delta_shares) > 0 or
+        abs(delta_pct) > 0.0 or
+        pledge_flag or
+        (price is not None and (shares_before > 0 or shares_after > 0))
+    )
+
+    # If neither real transaction evidence nor market structure (HSC/Free float) is present, do not emit bogus fact
+    if not has_transaction_evidence and not hsc_flag and free_float_pct is None:
+        return []
+
+    if not actor_name or len(actor_name) < 2:
+        if has_transaction_evidence:
+            actor_name = "Disclosed Strategic Holder"
+        else:
+            actor_name = "Struktur Pasar Publik"
+
+    # If only market structure was detected without real share movement, classify as observation
+    if not has_transaction_evidence:
+        direction = "OBSERVATION"
+        context_classification = "MARKET_STRUCTURE_OBSERVATION"
+
     # Construct complete fact record
     fact = {
         "actor_name": actor_name,
@@ -409,7 +432,7 @@ def extract_ownership_facts_from_text(
         "price": price,
         "estimated_value": estimated_value,
         "purpose": purpose,
-        "transaction_type": "PLEDGE" if pledge_flag else ("ADMINISTRATIVE" if is_admin else "OPEN_MARKET"),
+        "transaction_type": "PLEDGE" if pledge_flag else ("ADMINISTRATIVE" if is_admin else ("OBSERVATION" if not has_transaction_evidence else "OPEN_MARKET")),
         "transaction_date": transaction_date,
         "reporting_date": reporting_date,
         "publication_date": publication_date,

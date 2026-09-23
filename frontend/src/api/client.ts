@@ -34,6 +34,7 @@ export async function fetchSignals(params?: {
   priority?: string;
   behavior?: string;
   action_type?: string;
+  role?: string;
   stage?: string;
   impact?: string;
   ticker?: string;
@@ -46,6 +47,7 @@ export async function fetchSignals(params?: {
   if (params?.priority) query.set('priority', params.priority);
   if (params?.behavior) query.set('behavior', params.behavior);
   if (params?.action_type) query.set('action_type', params.action_type);
+  if (params?.role) query.set('role', params.role);
   if (params?.stage) query.set('stage', params.stage);
   if (params?.impact) query.set('impact', params.impact);
   if (params?.ticker) query.set('ticker', params.ticker);

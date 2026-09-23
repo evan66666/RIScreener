@@ -12,6 +12,8 @@ interface FilterBarProps {
   setSelectedAction: (val: string) => void;
   searchTicker: string;
   setSearchTicker: (val: string) => void;
+  selectedRole: string;
+  setSelectedRole: (val: string) => void;
   filterDateRange: string;
   setFilterDateRange: (val: string) => void;
   filterCustomFrom: string;
@@ -28,6 +30,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   setSelectedPriority,
   selectedBehavior,
   setSelectedBehavior,
+  selectedRole,
+  setSelectedRole,
   selectedStage,
   setSelectedStage,
   selectedAction,
@@ -62,6 +66,15 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     { label: 'Perubahan Administratif', value: 'ADMINISTRATIVE_CHANGE' },
   ];
 
+  const roleOptions = [
+    { label: 'Semua Role Pihak', value: '' },
+    { label: 'Pengendali (PSP)', value: 'CONTROLLER' },
+    { label: 'Direktur', value: 'DIRECTOR' },
+    { label: 'Komisaris', value: 'COMMISSIONER' },
+    { label: 'Investor Strategis', value: 'STRATEGIC_INVESTOR' },
+    { label: 'Institusi / Reksadana', value: 'INSTITUTION' },
+  ];
+
   const stageOptions = [
     { label: 'Semua Tahap', value: '' },
     { label: 'Tahap Awal', value: 'DEVELOPING' },
@@ -81,6 +94,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   const clearFilters = () => {
     setSelectedPriority('');
     setSelectedBehavior('');
+    setSelectedRole('');
     setSelectedStage('');
     setSelectedAction('');
     setSearchTicker('');
@@ -92,6 +106,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   const hasActiveFilters =
     selectedPriority ||
     selectedBehavior ||
+    selectedRole ||
     selectedStage ||
     selectedAction ||
     searchTicker ||
@@ -155,6 +170,22 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             className="bg-transparent text-slate-200 text-xs font-semibold focus:outline-none cursor-pointer"
           >
             {behaviorOptions.map((opt) => (
+              <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-200">
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Actor Role Dropdown */}
+        <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300">
+          <span className="text-[11px] font-medium text-slate-400 mr-1.5">Role:</span>
+          <select
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+            className="bg-transparent text-slate-200 text-xs font-semibold focus:outline-none cursor-pointer"
+          >
+            {roleOptions.map((opt) => (
               <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-200">
                 {opt.label}
               </option>

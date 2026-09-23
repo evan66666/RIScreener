@@ -142,6 +142,7 @@ def list_signals(
     priority: Optional[str] = Query(None),
     behavior: Optional[str] = Query(None),
     action_type: Optional[str] = Query(None),
+    role: Optional[str] = Query(None),
     stage: Optional[str] = Query(None),
     impact: Optional[str] = Query(None),
     ticker: Optional[str] = Query(None),
@@ -216,6 +217,17 @@ def list_signals(
         if action_type and intel.primary_action_type != action_type:
             continue
 
+        # Filter by actor role / classification
+        if role and role.strip():
+            target_role = role.strip().upper()
+            act_role = (act.actor_type if act else "").upper()
+            if target_role == "CONTROLLER" and not ("CONTROLLER" in act_role or "PSP" in act_role):
+                continue
+            elif target_role in ("DIRECTOR", "COMMISSIONER", "STRATEGIC_INVESTOR", "INSTITUTION") and target_role not in act_role:
+                continue
+            elif target_role not in ("CONTROLLER", "DIRECTOR", "COMMISSIONER", "STRATEGIC_INVESTOR", "INSTITUTION") and target_role != act_role:
+                continue
+
         # Get behavior state
         beh_state = None
         if act:
@@ -272,8 +284,8 @@ def list_signals(
             "company_name": comp.name or comp.ticker,
             "sector": comp.sector or "",
             "primary_actor_id": act.id if act else None,
-            "actor_name": act.canonical_name if act else "Disclosed Strategic Holder",
-            "actor_type": act.actor_type if act else "STRATEGIC_HOLDER",
+            "actor_name": act.canonical_name if act else "Pihak Terlapor",
+            "actor_type": act.actor_type if act else "SIGNIFICANT_HOLDER",
             "behavior_type": intel.primary_behavior or "STRATEGIC_POSITIONING_CANDIDATE",
             "total_shares_delta": beh_state.total_shares_delta if beh_state else 0.0,
             "pct_before": beh_state.pct_before if beh_state else 0.0,
@@ -281,9 +293,9 @@ def list_signals(
             "delta_pct": beh_state.delta_pct if beh_state else 0.0,
             "avg_price": beh_state.avg_price if beh_state else None,
             "transaction_count": beh_state.transaction_count if beh_state else 1,
-            "action_type": intel.primary_action_type or "RIGHT_ISSUE_HMETD",
-            "action_name": action_meta.get("name", intel.primary_action_type or "Strategic Positioning"),
-            "category": action_meta.get("category", "CAPITAL_RAISING"),
+            "action_type": intel.primary_action_type or (action_state.action_type if action_state else "INFORMASI_MATERIAL"),
+            "action_name": action_meta.get("name", (intel.primary_action_type or (action_state.action_type if action_state else "Keterbukaan Informasi")).replace("_", " ")),
+            "category": action_meta.get("category", "CORPORATE_DISCLOSURE"),
             "stage": cur_stage,
             "impact": cur_impact,
             "priority": intel.overall_priority,
@@ -452,13 +464,24 @@ def get_signal_detail(id: int, session: Session = Depends(get_session)):
             .where(ActorBehaviorState.actor_id == act.id)
         ).first()
 
+    action_state = None
+    if intel.primary_action_type:
+        action_state = session.exec(
+            select(IssuerActionState)
+            .where(IssuerActionState.company_id == comp.id)
+            .where(IssuerActionState.action_type == intel.primary_action_type)
+        ).first()
+
     action_meta = ACTION_FAMILIES.get(intel.primary_action_type or "", {})
 
-    actor_name = act.canonical_name if act else "Disclosed Strategic Holder"
-    actor_type = act.actor_type if act else "STRATEGIC_HOLDER"
+    actor_name = act.canonical_name if act else "Pihak Terlapor"
+    actor_type = act.actor_type if act else "SIGNIFICANT_HOLDER"
     behavior_type = intel.primary_behavior or "STRATEGIC_POSITIONING_CANDIDATE"
-    action_type = intel.primary_action_type or "RIGHT_ISSUE_HMETD"
-    action_name = action_meta.get("name", intel.primary_action_type or "Strategic Positioning")
+    action_type = intel.primary_action_type or (action_state.action_type if action_state else "INFORMASI_MATERIAL")
+    action_name = action_meta.get("name", (intel.primary_action_type or (action_state.action_type if action_state else "Keterbukaan Informasi")).replace("_", " "))
+
+    current_stage = action_state.current_stage if action_state else (beh_state.current_stage if beh_state else "DEVELOPING")
+    current_impact = action_state.current_impact if action_state else "POSITIVE"
 
     # Fetch CorporateActionAssessment for company
     ca_assessment = session.exec(
@@ -517,8 +540,8 @@ def get_signal_detail(id: int, session: Session = Depends(get_session)):
         "behavior_type": behavior_type,
         "action_type": action_type,
         "action_name": action_name,
-        "stage": "DEVELOPING",
-        "impact": "POSITIVE",
+        "stage": current_stage,
+        "impact": current_impact,
         "smart_money_score": intel.smart_money_score,
         "strategic_positioning_score": intel.strategic_positioning_score,
         "corporate_transformation_score": intel.corporate_transformation_score,

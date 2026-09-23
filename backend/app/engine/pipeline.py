@@ -413,45 +413,52 @@ async def execute_screening_pipeline(
                         session.add(mss)
                         session.commit()
 
-                    ow_ev = OwnershipEvent(
-                        company_id=company.id,
-                        actor_id=actor.id,
-                        event_date=fact["event_date"],
-                        transaction_date=fact.get("transaction_date"),
-                        reporting_date=fact.get("reporting_date"),
-                        publication_date=fact.get("publication_date"),
-                        event_type=fact["direction"],
-                        shares_before=fact["shares_before"],
-                        shares_after=fact["shares_after"],
-                        delta_shares=fact["delta_shares"],
-                        pct_before=fact["pct_before"],
-                        pct_after=fact["pct_after"],
-                        delta_pct=fact["delta_pct"],
-                        transaction_price=fact["price"],
-                        estimated_value=fact["estimated_value"],
-                        transaction_type=fact.get("transaction_type"),
-                        administrative_flag=fact.get("administrative_flag", False),
-                        related_party_flag=fact.get("related_party_flag", False),
-                        pledge_flag=fact.get("pledge_flag", False),
-                        source_document_id=doc.id,
-                        context_classification=fact["context_classification"],
-                        confidence=fact["confidence"]
+                    # Only record OwnershipEvent & TransactionEvent if there is genuine share movement or pledge
+                    is_real_tx = (
+                        fact["direction"] != "OBSERVATION" and
+                        (abs(fact["delta_shares"]) > 0 or abs(fact["delta_pct"]) > 0 or fact.get("pledge_flag"))
                     )
-                    session.add(ow_ev)
-                    session.commit()
 
-                    tx_ev = TransactionEvent(
-                        company_id=company.id,
-                        actor_id=actor.id,
-                        event_date=fact.get("transaction_date") or fact["event_date"],
-                        direction=fact["direction"],
-                        quantity=fact["delta_shares"],
-                        price=fact["price"],
-                        estimated_value=fact["estimated_value"],
-                        source_document_id=doc.id
-                    )
-                    session.add(tx_ev)
-                    session.commit()
+                    if is_real_tx:
+                        ow_ev = OwnershipEvent(
+                            company_id=company.id,
+                            actor_id=actor.id,
+                            event_date=fact["event_date"],
+                            transaction_date=fact.get("transaction_date"),
+                            reporting_date=fact.get("reporting_date"),
+                            publication_date=fact.get("publication_date"),
+                            event_type=fact["direction"],
+                            shares_before=fact["shares_before"],
+                            shares_after=fact["shares_after"],
+                            delta_shares=fact["delta_shares"],
+                            pct_before=fact["pct_before"],
+                            pct_after=fact["pct_after"],
+                            delta_pct=fact["delta_pct"],
+                            transaction_price=fact["price"],
+                            estimated_value=fact["estimated_value"],
+                            transaction_type=fact.get("transaction_type"),
+                            administrative_flag=fact.get("administrative_flag", False),
+                            related_party_flag=fact.get("related_party_flag", False),
+                            pledge_flag=fact.get("pledge_flag", False),
+                            source_document_id=doc.id,
+                            context_classification=fact["context_classification"],
+                            confidence=fact["confidence"]
+                        )
+                        session.add(ow_ev)
+                        session.commit()
+
+                        tx_ev = TransactionEvent(
+                            company_id=company.id,
+                            actor_id=actor.id,
+                            event_date=fact.get("transaction_date") or fact["event_date"],
+                            direction=fact["direction"],
+                            quantity=fact["delta_shares"],
+                            price=fact["price"],
+                            estimated_value=fact["estimated_value"],
+                            source_document_id=doc.id
+                        )
+                        session.add(tx_ev)
+                        session.commit()
 
                     # Save Ownership Evidence
                     ev_excerpt = f"{actor.canonical_name} ({fact['direction']}): {fact['delta_shares']:,.0f} saham ({fact['pct_before']:.2f}% -> {fact['pct_after']:.2f}%)"

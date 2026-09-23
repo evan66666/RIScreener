@@ -92,6 +92,15 @@ export const SignalCard: React.FC<SignalCardProps> = ({ signal, onSelect }) => {
     EXPLICIT: 'bg-emerald-950/70 text-emerald-300 border-emerald-700/50',
   };
 
+  const roleBadges: Record<string, { label: string; badge: string }> = {
+    CONTROLLER: { label: 'Pengendali (PSP)', badge: 'bg-amber-950/80 text-amber-300 border-amber-700/60' },
+    DIRECTOR: { label: 'Direksi', badge: 'bg-blue-950/80 text-blue-300 border-blue-700/60' },
+    COMMISSIONER: { label: 'Komisaris', badge: 'bg-indigo-950/80 text-indigo-300 border-indigo-700/60' },
+    STRATEGIC_INVESTOR: { label: 'Inv. Strategis', badge: 'bg-cyan-950/80 text-cyan-300 border-cyan-700/60' },
+    INSTITUTION: { label: 'Institusi', badge: 'bg-purple-950/80 text-purple-300 border-purple-700/60' },
+    SIGNIFICANT_HOLDER: { label: 'Pemegang >5%', badge: 'bg-slate-800 text-slate-300 border-slate-700' },
+  };
+
   const pStyle = priorityStyles[signal.priority] || priorityStyles.MEDIUM;
   const bBadge = behaviorBadges[signal.behavior_type] || 'bg-slate-800 text-slate-300 border-slate-700';
 
@@ -185,9 +194,14 @@ export const SignalCard: React.FC<SignalCardProps> = ({ signal, onSelect }) => {
         <div className="space-y-1.5 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <User className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <span className="text-xs font-semibold text-slate-100 truncate max-w-[220px]" title={rawActor}>
+            <span className="text-xs font-semibold text-slate-100 truncate max-w-[200px]" title={rawActor}>
               {cleanActor}
             </span>
+            {signal.actor_type && roleBadges[signal.actor_type] && (
+              <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${roleBadges[signal.actor_type].badge}`}>
+                {roleBadges[signal.actor_type].label}
+              </span>
+            )}
             {signal.domicile === 'FOREIGN' && (
               <span className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
                 <Globe className="w-2.5 h-2.5" />

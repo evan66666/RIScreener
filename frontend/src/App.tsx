@@ -36,6 +36,7 @@ export const App: React.FC = () => {
   // Filter states
   const [selectedPriority, setSelectedPriority] = useState<string>('');
   const [selectedBehavior, setSelectedBehavior] = useState<string>('');
+  const [selectedRole, setSelectedRole] = useState<string>('');
   const [selectedStage, setSelectedStage] = useState<string>('');
   const [selectedAction, setSelectedAction] = useState<string>('');
   const [searchTicker, setSearchTicker] = useState<string>('');
@@ -147,6 +148,7 @@ export const App: React.FC = () => {
         priority: selectedPriority || undefined,
         behavior: selectedBehavior || undefined,
         action_type: selectedAction || undefined,
+        role: selectedRole || undefined,
         stage: selectedStage || undefined,
         q: searchTicker.trim() || undefined,
         date_from: dFrom,
@@ -164,6 +166,7 @@ export const App: React.FC = () => {
   }, [
     selectedPriority,
     selectedBehavior,
+    selectedRole,
     selectedStage,
     selectedAction,
     searchTicker,
@@ -368,6 +371,8 @@ export const App: React.FC = () => {
           setSelectedPriority={setSelectedPriority}
           selectedBehavior={selectedBehavior}
           setSelectedBehavior={setSelectedBehavior}
+          selectedRole={selectedRole}
+          setSelectedRole={setSelectedRole}
           selectedStage={selectedStage}
           setSelectedStage={setSelectedStage}
           selectedAction={selectedAction}
